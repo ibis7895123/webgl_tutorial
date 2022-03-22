@@ -17,16 +17,24 @@ function main() {
   // Vertex shader program
   const vsSource = `
     attribute vec4 aVertexPosition;
+    attribute vec4 aVertexColor;
+
     uniform mat4 uModelViewMatrix;
     uniform mat4 uProjectionMatrix;
+
+    varying lowp vec4 vColor;
+
     void main() {
       gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+      vColor = aVertexColor;
     }
   `
 
   const fsSource = `
+    varying lowp vec4 vColor;
+
     void main() {
-      gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+      gl_FragColor = vColor;
     }
   `
 
@@ -39,6 +47,7 @@ function main() {
     program: shaderProgram,
     attribLocations: {
       vertexPosition: gl.getAttribLocation(shaderProgram, "aVertexPosition"),
+      vertexColor: gl.getAttribLocation(shaderProgram, "aVertexColor"),
     },
     uniformLocations: {
       projectionMatrix: gl.getUniformLocation(
@@ -194,6 +203,25 @@ function drawScene(gl, programInfo, buffers) {
       offset
     )
     gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition)
+  }
+
+  // WebGL に、カラーバッファから vertexColor 属性に色を抽出する方法を指示します。
+  {
+    const numComponents = 4
+    const type = gl.FLOAT
+    const normalize = false
+    const stride = 0
+    const offset = 0
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color)
+    gl.vertexAttribPointer(
+      programInfo.attribLocations.vertexColor,
+      numComponents,
+      type,
+      normalize,
+      stride,
+      offset
+    )
+    gl.enableVertexAttribArray(programInfo.attribLocations.vertexColor)
   }
 
   // WebGLに描画時に我々のプログラムを使用するように指示する
