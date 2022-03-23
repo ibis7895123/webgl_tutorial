@@ -1,4 +1,4 @@
-let squareRotation = 0.0
+let cubeRotation = 0.0
 
 window.onload = main
 
@@ -129,8 +129,21 @@ function initBuffers(gl) {
   // バッファーにpositionBufferを適用する
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer)
 
-  // 正方形の位置の配列を作成する
-  const positions = [1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, -1.0]
+  // ここで、キューブの位置の配列を作成します。
+  const positions = [
+    // Front face
+    -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0,
+    // Back face
+    -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0,
+    // Top face
+    -1.0, 1.0, -1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0,
+    // Bottom face
+    -1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0,
+    // Right face
+    1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0,
+    // Left face
+    -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0,
+  ]
 
   // ここで、WebGL に位置のリストを渡し、形状を構築します。
   // これは JavaScript の配列から Float32Array を作成し、
@@ -138,32 +151,85 @@ function initBuffers(gl) {
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW)
 
   // カラーバッファを作る
-  const colors = [
-    1.0,
-    1.0,
-    1.0,
-    1.0, // white
-    1.0,
-    0.0,
-    0.0,
-    1.0, // red
-    0.0,
-    1.0,
-    0.0,
-    1.0, // green
-    0.0,
-    0.0,
-    1.0,
-    1.0, // blue
+  const faceColors = [
+    [1.0, 1.0, 1.0, 1.0], // Front face: white
+    [1.0, 0.0, 0.0, 1.0], // Back face: red
+    [0.0, 1.0, 0.0, 1.0], // Top face: green
+    [0.0, 0.0, 1.0, 1.0], // Bottom face: blue
+    [1.0, 1.0, 0.0, 1.0], // Right face: yellow
+    [1.0, 0.0, 1.0, 1.0], // Left face: purple
   ]
+
+  let colors = []
+  faceColors.forEach((color) => {
+    colors = colors.concat(color, color, color, color)
+  })
 
   const colorBuffer = gl.createBuffer()
   gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer)
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW)
 
+  // 要素配列バッファを構築する。
+  // これは，各面の頂点の頂点配列へのインデックスを指定するものである．
+  const indexBuffer = gl.createBuffer()
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer)
+
+  // この配列は、各面を2つの三角形として定義し、
+  // 頂点配列のインデックスを用いて各三角形の位置を指定する。
+  const indices = [
+    0,
+    1,
+    2,
+    0,
+    2,
+    3, // front
+
+    4,
+    5,
+    6,
+    4,
+    6,
+    7, // back
+
+    8,
+    9,
+    10,
+    8,
+    10,
+    11, // top
+
+    12,
+    13,
+    14,
+    12,
+    14,
+    15, // bottom
+
+    16,
+    17,
+    18,
+    16,
+    18,
+    19, // right
+
+    20,
+    21,
+    22,
+    20,
+    22,
+    23, // left
+  ]
+
+  gl.bufferData(
+    gl.ELEMENT_ARRAY_BUFFER,
+    new Uint16Array(indices),
+    gl.STATIC_DRAW
+  )
+
   return {
     position: positionBuffer,
     color: colorBuffer,
+    indices: indexBuffer,
   }
 }
 
@@ -203,13 +269,20 @@ function drawScene(gl, programInfo, buffers, deltaTime) {
   mat4.rotate(
     modelViewMatrix, // destination matrix
     modelViewMatrix, // matrix to rotate
-    squareRotation, // amount to rotate in radians
-    [0, 0, 1] // axis to rotate around
+    cubeRotation, // amount to rotate in radians
+    [0, 0, 1] // axis to rotate around(Z)
+  )
+
+  mat4.rotate(
+    modelViewMatrix, // destination matrix
+    modelViewMatrix, // matrix to rotate
+    cubeRotation * 0.7, // amount to rotate in radians
+    [0, 1, 0] // axis to rotate around (X)
   )
 
   // WebGL に、位置バッファから vertexPosition 属性に位置を引き出す方法を指示します。
   {
-    const numComponents = 2
+    const numComponents = 3
     const type = gl.FLOAT
     const normalize = false
     const stride = 0
@@ -245,6 +318,9 @@ function drawScene(gl, programInfo, buffers, deltaTime) {
     gl.enableVertexAttribArray(programInfo.attribLocations.vertexColor)
   }
 
+  // WebGL に、頂点のインデックスに使用するインデックスを通知します。
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indices)
+
   // WebGLに描画時に我々のプログラムを使用するように指示する
   gl.useProgram(programInfo.program)
 
@@ -261,11 +337,12 @@ function drawScene(gl, programInfo, buffers, deltaTime) {
   )
 
   {
+    const vertexCount = 36
+    const type = gl.UNSIGNED_SHORT
     const offset = 0
-    const vertexCount = 4
-    gl.drawArrays(gl.TRIANGLE_STRIP, offset, vertexCount)
+    gl.drawElements(gl.TRIANGLE_STRIP, vertexCount, type, offset)
   }
 
   // 次の描画のためにローテーションを更新する
-  squareRotation += deltaTime
+  cubeRotation += deltaTime
 }
