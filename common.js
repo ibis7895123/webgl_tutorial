@@ -79,49 +79,6 @@ function main() {
   render(Date.now())
 }
 
-function initShaderProgram(gl, vsSource, fsSource) {
-  const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource)
-  const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource)
-
-  const shaderProgram = gl.createProgram()
-  gl.attachShader(shaderProgram, vertexShader)
-  gl.attachShader(shaderProgram, fragmentShader)
-  gl.linkProgram(shaderProgram)
-
-  // シェーダープログラムの生成に失敗したらアラート
-  if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-    alert(
-      "Unable to initialize the shader program: " +
-        gl.getProgramInfoLog(shaderProgram)
-    )
-    return null
-  }
-
-  return shaderProgram
-}
-
-// 与えられたタイプのシェーダを作成し、ソースをアップロードしてコンパイルする。
-function loadShader(gl, type, source) {
-  const shader = gl.createShader(type)
-
-  // シェーダーオブジェクトにソースを送る
-  gl.shaderSource(shader, source)
-
-  // シェーダープログラムのコンパイル
-  gl.compileShader(shader)
-
-  // コンパイルに成功したか確認する
-  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    alert(
-      "An error occurred compiling the shaders: " + gl.getShaderInfoLog(shader)
-    )
-    gl.deleteShader(shader)
-    return null
-  }
-
-  return shader
-}
-
 function initBuffers(gl) {
   // スクエアの位置のバッファーを作る
   const positionBuffer = gl.createBuffer()
@@ -340,9 +297,52 @@ function drawScene(gl, programInfo, buffers, deltaTime) {
     const vertexCount = 36
     const type = gl.UNSIGNED_SHORT
     const offset = 0
-    gl.drawElements(gl.TRIANGLE_STRIP, vertexCount, type, offset)
+    gl.drawElements(gl.TRIANGLES, vertexCount, type, offset)
   }
 
   // 次の描画のためにローテーションを更新する
   cubeRotation += deltaTime
+}
+
+function initShaderProgram(gl, vsSource, fsSource) {
+  const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource)
+  const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource)
+
+  const shaderProgram = gl.createProgram()
+  gl.attachShader(shaderProgram, vertexShader)
+  gl.attachShader(shaderProgram, fragmentShader)
+  gl.linkProgram(shaderProgram)
+
+  // シェーダープログラムの生成に失敗したらアラート
+  if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+    alert(
+      "Unable to initialize the shader program: " +
+        gl.getProgramInfoLog(shaderProgram)
+    )
+    return null
+  }
+
+  return shaderProgram
+}
+
+// 与えられたタイプのシェーダを作成し、ソースをアップロードしてコンパイルする。
+function loadShader(gl, type, source) {
+  const shader = gl.createShader(type)
+
+  // シェーダーオブジェクトにソースを送る
+  gl.shaderSource(shader, source)
+
+  // シェーダープログラムのコンパイル
+  gl.compileShader(shader)
+
+  // コンパイルに成功したか確認する
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    alert(
+      "An error occurred compiling the shaders: " + gl.getShaderInfoLog(shader)
+    )
+    gl.deleteShader(shader)
+    return null
+  }
+
+  return shader
 }
