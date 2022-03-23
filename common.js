@@ -19,24 +19,31 @@ function main() {
   // Vertex shader program
   const vsSource = `
     attribute vec4 aVertexPosition;
-    attribute vec4 aVertexColor;
+    attribute vec2 aTextureCoord;
+    // attribute vec4 aVertexColor;
 
     uniform mat4 uModelViewMatrix;
     uniform mat4 uProjectionMatrix;
 
-    varying lowp vec4 vColor;
+    varying highp vec2 vTextureCoord;
+    // varying lowp vec4 vColor;
 
     void main() {
       gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
-      vColor = aVertexColor;
+      vTextureCoord = aTextureCoord;
+      // vColor = aVertexColor;
     }
   `
 
   const fsSource = `
-    varying lowp vec4 vColor;
+    varying highp vec2 vTextureCoord;
+    // varying lowp vec4 vColor;
+
+    uniform sampler2D uSampler;
 
     void main() {
-      gl_FragColor = vColor;
+      gl_FragColor = texture2D(uSampler, vTextureCoord);
+      // gl_FragColor = vColor;
     }
   `
 
@@ -49,7 +56,8 @@ function main() {
     program: shaderProgram,
     attribLocations: {
       vertexPosition: gl.getAttribLocation(shaderProgram, "aVertexPosition"),
-      vertexColor: gl.getAttribLocation(shaderProgram, "aVertexColor"),
+      textureCoord: gl.getAttribLocation(shaderProgram, "aTextureCoord"),
+      // vertexColor: gl.getAttribLocation(shaderProgram, "aVertexColor"),
     },
     uniformLocations: {
       projectionMatrix: gl.getUniformLocation(
@@ -57,11 +65,17 @@ function main() {
         "uProjectionMatrix"
       ),
       modelViewMatrix: gl.getUniformLocation(shaderProgram, "uModelViewMatrix"),
+      uSampler: gl.getUniformLocation(shaderProgram, "uSampler"),
     },
   }
 
   // ここで、これから描画するすべてのオブジェクトを構築するルーチンを呼び出します。
   const buffers = initBuffers(gl)
+
+  const texture = loadTexture(
+    gl,
+    "https://www.mozilla.org/media/protocol/img/logos/firefox/browser/logo.eb1324e44442.svg"
+  )
 
   let then = 0
   // シーンを繰り返し描画する
@@ -71,7 +85,7 @@ function main() {
     then = now
 
     // シーンを描画する
-    drawScene(gl, programInfo, buffers, deltaTime)
+    drawScene(gl, programInfo, buffers, texture, deltaTime)
 
     requestAnimationFrame(render)
   }
@@ -107,24 +121,49 @@ function initBuffers(gl) {
   // それを使って現在のバッファを埋めることで行います。
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW)
 
-  // カラーバッファを作る
-  const faceColors = [
-    [1.0, 1.0, 1.0, 1.0], // Front face: white
-    [1.0, 0.0, 0.0, 1.0], // Back face: red
-    [0.0, 1.0, 0.0, 1.0], // Top face: green
-    [0.0, 0.0, 1.0, 1.0], // Bottom face: blue
-    [1.0, 1.0, 0.0, 1.0], // Right face: yellow
-    [1.0, 0.0, 1.0, 1.0], // Left face: purple
+  // テクスチャバッファを作る
+  const textureCoordBuffer = gl.createBuffer()
+  gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer)
+
+  const textureCoordinates = [
+    // Front
+    0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
+    // Back
+    0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
+    // Top
+    0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
+    // Bottom
+    0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
+    // Right
+    0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
+    // Left
+    0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
   ]
 
-  let colors = []
-  faceColors.forEach((color) => {
-    colors = colors.concat(color, color, color, color)
-  })
+  gl.bufferData(
+    gl.ARRAY_BUFFER,
+    new Float32Array(textureCoordinates),
+    gl.STATIC_DRAW
+  )
 
-  const colorBuffer = gl.createBuffer()
-  gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer)
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW)
+  // カラーバッファを作る
+  // const faceColors = [
+  //   [1.0, 1.0, 1.0, 1.0], // Front face: white
+  //   [1.0, 0.0, 0.0, 1.0], // Back face: red
+  //   [0.0, 1.0, 0.0, 1.0], // Top face: green
+  //   [0.0, 0.0, 1.0, 1.0], // Bottom face: blue
+  //   [1.0, 1.0, 0.0, 1.0], // Right face: yellow
+  //   [1.0, 0.0, 1.0, 1.0], // Left face: purple
+  // ]
+
+  // let colors = []
+  // faceColors.forEach((color) => {
+  //   colors = colors.concat(color, color, color, color)
+  // })
+
+  // const colorBuffer = gl.createBuffer()
+  // gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer)
+  // gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW)
 
   // 要素配列バッファを構築する。
   // これは，各面の頂点の頂点配列へのインデックスを指定するものである．
@@ -185,12 +224,74 @@ function initBuffers(gl) {
 
   return {
     position: positionBuffer,
-    color: colorBuffer,
+    textureCoord: textureCoordBuffer,
+    // color: colorBuffer,
     indices: indexBuffer,
   }
 }
 
-function drawScene(gl, programInfo, buffers, deltaTime) {
+// テクスチャを初期化し、画像を読み込む。
+// 画像の読み込みが完了したら、それをテクスチャにコピーします。
+function loadTexture(gl, url) {
+  const texture = gl.createTexture()
+  gl.bindTexture(gl.TEXTURE_2D, texture)
+
+  // 画像はインターネット経由でダウンロードするため、準備が整うまで時間がかかる場合があります。
+  // それまでは、テクスチャに1ピクセルでも入れておけば、すぐに使えるようになります。
+  // 画像のダウンロードが完了したら 画像の内容でテクスチャを更新します。
+  const level = 0
+  const internalFormat = gl.RGBA
+  const width = 1
+  const height = 1
+  const border = 0
+  const srcFormat = gl.RGBA
+  const srcType = gl.UNSIGNED_BYTE
+  const pixel = new Uint8Array([0, 0, 255, 255])
+  gl.texImage2D(
+    gl.TEXTURE_2D,
+    level,
+    internalFormat,
+    width,
+    height,
+    border,
+    srcFormat,
+    srcType,
+    pixel
+  )
+
+  const image = new Image()
+  image.onload = function () {
+    gl.bindTexture(gl.TEXTURE_2D, texture)
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      level,
+      internalFormat,
+      srcFormat,
+      srcType,
+      image
+    )
+  }
+
+  // WebGL1 は 2 のべき乗の画像とそうでない画像とで要件が異なるので、
+  // 画像が両方の次元で 2 のべき乗であるかどうかを確認します。
+  if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
+    gl.generateMipmap(gl.TEXTURE_2D)
+  } else {
+    // Turn off mips and set wrapping to clamp to edge
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+  }
+  image.src = url
+
+  return texture
+}
+
+function isPowerOf2(value) {
+  return (value & (value - 1)) == 0
+}
+
+function drawScene(gl, programInfo, buffers, texture, deltaTime) {
   // 黒色、完全不透明にクリア
   gl.clearColor(0.0, 0.0, 0.0, 1.0) // Clear to black, fully opaque
   gl.clearDepth(1.0) // Clear everything
@@ -256,24 +357,42 @@ function drawScene(gl, programInfo, buffers, deltaTime) {
     gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition)
   }
 
-  // WebGL に、カラーバッファから vertexColor 属性に色を抽出する方法を指示します。
   {
-    const numComponents = 4
+    const num = 2
     const type = gl.FLOAT
     const normalize = false
     const stride = 0
     const offset = 0
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color)
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.textureCoord)
     gl.vertexAttribPointer(
-      programInfo.attribLocations.vertexColor,
-      numComponents,
+      programInfo.attribLocations.textureCoord,
+      num,
       type,
       normalize,
       stride,
       offset
     )
-    gl.enableVertexAttribArray(programInfo.attribLocations.vertexColor)
+    gl.enableVertexAttribArray(programInfo.attribLocations.textureCoord)
   }
+
+  // WebGL に、カラーバッファから vertexColor 属性に色を抽出する方法を指示します。
+  // {
+  //   const numComponents = 4
+  //   const type = gl.FLOAT
+  //   const normalize = false
+  //   const stride = 0
+  //   const offset = 0
+  //   gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color)
+  //   gl.vertexAttribPointer(
+  //     programInfo.attribLocations.vertexColor,
+  //     numComponents,
+  //     type,
+  //     normalize,
+  //     stride,
+  //     offset
+  //   )
+  //   gl.enableVertexAttribArray(programInfo.attribLocations.vertexColor)
+  // }
 
   // WebGL に、頂点のインデックスに使用するインデックスを通知します。
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indices)
@@ -292,6 +411,13 @@ function drawScene(gl, programInfo, buffers, deltaTime) {
     false,
     modelViewMatrix
   )
+
+  // WebGLにテクスチャユニット0に影響を与えたいことを伝える
+  gl.activeTexture(gl.TEXTURE0)
+  // テクスチャをテクスチャユニット0にバインドする
+  gl.bindTexture(gl.TEXTURE_2D, texture)
+  // テクスチャをテクスチャユニット0にバインドすることをシェーダに指示します。
+  gl.uniform1i(programInfo.uniformLocations.uSampler, 0)
 
   {
     const vertexCount = 36
