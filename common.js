@@ -1,3 +1,5 @@
+let squareRotation = 0.0
+
 window.onload = main
 
 function main() {
@@ -61,8 +63,20 @@ function main() {
   // ここで、これから描画するすべてのオブジェクトを構築するルーチンを呼び出します。
   const buffers = initBuffers(gl)
 
-  // シーンを描画する
-  drawScene(gl, programInfo, buffers)
+  let then = 0
+  // シーンを繰り返し描画する
+  function render(now) {
+    now *= 0.001
+    const deltaTime = now - then
+    then = now
+
+    // シーンを描画する
+    drawScene(gl, programInfo, buffers, deltaTime)
+
+    requestAnimationFrame(render)
+  }
+
+  render(Date.now())
 }
 
 function initShaderProgram(gl, vsSource, fsSource) {
@@ -153,7 +167,7 @@ function initBuffers(gl) {
   }
 }
 
-function drawScene(gl, programInfo, buffers) {
+function drawScene(gl, programInfo, buffers, deltaTime) {
   // 黒色、完全不透明にクリア
   gl.clearColor(0.0, 0.0, 0.0, 1.0) // Clear to black, fully opaque
   gl.clearDepth(1.0) // Clear everything
@@ -183,8 +197,15 @@ function drawScene(gl, programInfo, buffers) {
   mat4.translate(
     modelViewMatrix, // destination matrix
     modelViewMatrix, // matrix to translate
-    [-0.0, 0.0, -6.0]
-  ) // amount to translate
+    [-0.0, 0.0, -6.0] // amount to translate
+  )
+
+  mat4.rotate(
+    modelViewMatrix, // destination matrix
+    modelViewMatrix, // matrix to rotate
+    squareRotation, // amount to rotate in radians
+    [0, 0, 1] // axis to rotate around
+  )
 
   // WebGL に、位置バッファから vertexPosition 属性に位置を引き出す方法を指示します。
   {
@@ -244,4 +265,7 @@ function drawScene(gl, programInfo, buffers) {
     const vertexCount = 4
     gl.drawArrays(gl.TRIANGLE_STRIP, offset, vertexCount)
   }
+
+  // 次の描画のためにローテーションを更新する
+  squareRotation += deltaTime
 }
