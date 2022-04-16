@@ -19,9 +19,10 @@ function init() {
   camera.position.set(0, 0, +1000)
 
   const geometry = new THREE.SphereGeometry(300, 30, 30)
-  // const loader = new THREE.TextureLoader()
-  // const texture = loader.load("imgs/earthmap1.jpg")
-  const material = new THREE.MeshStandardMaterial({ color: 0xff0000 })
+  const loader = new THREE.TextureLoader()
+  const texture = loader.load("earthmap1k.jpg")
+  // const material = new THREE.MeshStandardMaterial({ color: 0xff0000 })
+  const material = new THREE.MeshStandardMaterial({ map: texture })
   const mesh = new THREE.Mesh(geometry, material)
   scene.add(mesh)
 
