@@ -2,10 +2,12 @@ import { Loader } from "three"
 import * as THREE from "three"
 import Camera from "./Camera"
 import SavePoint from "./SavePoint"
+import { OrbitControls } from "three-orbitcontrols-ts"
 
 export default class Main {
   private readonly _scene: THREE.Scene
   private readonly _camera: Camera
+  private readonly _controls: OrbitControls
   private _renderer: THREE.WebGLRenderer
   private _savePoint: SavePoint
 
@@ -18,6 +20,12 @@ export default class Main {
     this._renderer.setPixelRatio(window.devicePixelRatio)
     this._renderer.setSize(window.innerWidth, window.innerHeight)
     document.body.appendChild(this._renderer.domElement)
+
+    // カメラコントロール
+    this._controls = new OrbitControls(this._camera, this._renderer.domElement)
+    this._controls.enableDamping = true
+    this._controls.dampingFactor = 0.2
+    this._controls.rotateSpeed = 0.09
 
     // 環境光
     const light = new THREE.PointLight(0xaaaaaa, 1.6, 50)
@@ -54,8 +62,8 @@ export default class Main {
       this._tick()
     })
 
-    // カメラの更新
-    this._camera.update()
+    // カメラコントロールの更新
+    this._controls.update()
 
     // セーブポイントの更新
     this._savePoint.update()

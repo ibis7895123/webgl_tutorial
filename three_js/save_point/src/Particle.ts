@@ -2,7 +2,7 @@ import * as THREE from "three"
 import { Util } from "./Util"
 
 // 何度も作られるのでクラス外で定数化する
-const texture = new THREE.TextureLoader().load("img/particle_2.png")
+const texture = new THREE.TextureLoader().load("img/particle.png")
 const material = new THREE.SpriteMaterial({
   color: 0x007eff,
   map: texture,

@@ -3342,10 +3342,22 @@ terser@^4.1.2:
     source-map "~0.6.1"
     source-map-support "~0.5.12"
 
+three-orbitcontrols-ts@^0.1.2:
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/three-orbitcontrols-ts/-/three-orbitcontrols-ts-0.1.2.tgz#2040955904022ae19c2e9c52ffdff43168658abd"
+  integrity sha1-IECVWQQCKuGcLpxS/9/0MWhlir0=
+  dependencies:
+    three "^0.83.0"
+
 three@^0.114.0:
   version "0.114.0"
   resolved "https://registry.yarnpkg.com/three/-/three-0.114.0.tgz#754d08467a950ddeef06a0c645a1302b130e455a"
   integrity sha512-3av45FxJeqYm7Rl02dfGBoqTaf2a934oUB4zMNrN8xjmASoSGeeykYoAr35+UntTdJDY/STw6CY3KuXFBWETig==
+
+three@^0.83.0:
+  version "0.83.0"
+  resolved "https://registry.yarnpkg.com/three/-/three-0.83.0.tgz#3b7f94790af3e021dac1f44a2617569ca2032b0b"
+  integrity sha1-O3+UeQrz4CHawfRKJhdWnKIDKws=
 
 through2@^2.0.0:
   version "2.0.5"
