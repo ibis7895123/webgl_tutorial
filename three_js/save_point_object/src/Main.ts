@@ -1,11 +1,13 @@
 import { Loader } from "three"
 import * as THREE from "three"
 import Camera from "./Camera"
+import SavePoint from "./SavePoint"
 
 export default class Main {
   private readonly _scene: THREE.Scene
   private readonly _camera: Camera
   private _renderer: THREE.WebGLRenderer
+  private _savePoint: SavePoint
 
   constructor() {
     this._scene = new THREE.Scene()
@@ -41,6 +43,8 @@ export default class Main {
     this._scene.add(plane)
 
     // セーブポイント
+    this._savePoint = new SavePoint()
+    this._scene.add(this._savePoint)
 
     this._tick()
   }
@@ -54,6 +58,7 @@ export default class Main {
     this._camera.update()
 
     // セーブポイントの更新
+    this._savePoint.update()
 
     this._renderer.render(this._scene, this._camera)
   }
