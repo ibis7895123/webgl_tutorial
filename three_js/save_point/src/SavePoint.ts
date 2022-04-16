@@ -1,4 +1,5 @@
 import * as THREE from "three"
+import ParticleEmitter from "./ParticleEmitter"
 import Pillar from "./Pillar"
 import Swirl from "./Swirl"
 
@@ -9,6 +10,8 @@ export default class SavePoint extends THREE.Object3D {
   private readonly _pillar2: Pillar
   // 地面の渦
   private readonly _swirl: Swirl
+  // パーティクルエミッター
+  private readonly _particleEmitter: ParticleEmitter
 
   constructor() {
     super()
@@ -24,6 +27,10 @@ export default class SavePoint extends THREE.Object3D {
     // 地面の渦
     this._swirl = new Swirl()
     this.add(this._swirl)
+
+    // パーティクルエミッター
+    this._particleEmitter = new ParticleEmitter()
+    this.add(this._particleEmitter)
 
     // 地面の光
     const groundTexture = new THREE.TextureLoader().load("img/ground.png")
@@ -47,6 +54,7 @@ export default class SavePoint extends THREE.Object3D {
   public update() {
     this._pillar.update()
     this._pillar2.update()
+    this._particleEmitter.update()
     this._swirl.update()
   }
 }
